@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Color Gradient Text</title>
+</head>
+<body>
+<select id="colorOption" onchange="applyGradient()">
+    <option value="20">20 Color Codes</option>
+    <option value="10">10 Color Codes</option>
+    <option value="5">5 Color Codes</option>
+</select>
+<textarea id="input" rows="10" cols="30" onfocus="clearDefaultText()" onblur="setDefaultText()" oninput="applyGradient()">Paste your description here...</textarea>
+<textarea id="output" rows="10" cols="30" readonly></textarea>
+
+<script>
+let isDefaultText = true; // Variable to track whether the default text is present
+
+function clearDefaultText() {
+    if (isDefaultText) {
+        document.getElementById('input').value = '';
+        isDefaultText = false;
+    }
+}
+
+function setDefaultText() {
+    const inputElem = document.getElementById('input');
+    if(inputElem.value.trim() === '') {
+        inputElem.value = 'Paste your description here...';
+        isDefaultText = true;
+    }
+}
+
+function applyGradient() {
+    if (isDefaultText) return; // Do not apply gradient if the default text is present
+    
+    const colorOptions = {
+        "20": ["&231", "&015", "&255", "&254", "&253", "&188", "&252", "&251", "&007", "&250", 
+               "&249", "&145", "&248", "&247", "&246", "&245", "&102", "&244", "&008", "&243", 
+               "&243", "&008", "&244", "&102", "&245", "&246", "&247", "&248", "&145", "&249", 
+               "&250", "&007", "&251", "&252", "&188", "&253", "&254", "&255", "&015", "&231"],
+        "10": ["&231", "&255", "&253", "&252", "&007", "&249", "&248", "&246", "&102", "&008",
+               "&008", "&102", "&246", "&248", "&249", "&007", "&252", "&253", "&255", "&231"],
+        "5":  ["&231", "&253", "&007", "&248", "&102", "&102", "&248", "&007", "&253", "&231"]
+    };
+    
+    const selectedOption = document.getElementById('colorOption').value;
+    const colorCodes = colorOptions[selectedOption];
+    
+    const inputText = document.getElementById('input').value;
+    const lines = inputText.split('\n');
+    const totalLength = 80;
+    const interval = Math.floor(totalLength / colorCodes.length);
+    
+    let outputText = '';
+    
+    for(const line of lines) {
+        let resultingLine = colorCodes[0];
+        let insertIdx = interval;
+        
+        for(let i = 1; i < colorCodes.length; i++) {
+            let startIdx = insertIdx - interval;
+            if(startIdx >= line.length) break;
+            
+            const substring = line.substring(startIdx, insertIdx);
+            resultingLine += substring + colorCodes[i];
+            
+            insertIdx += interval;
+        }
+        
+        resultingLine += line.substring(insertIdx - interval);
+        outputText += resultingLine + '\n';
+    }
+    
+    document.getElementById('output').value = outputText.trim();
+}
+</script>
+</body>
+</html>
