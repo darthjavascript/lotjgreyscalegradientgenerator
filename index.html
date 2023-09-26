@@ -3,18 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <title>Color Gradient Text</title>
+<style>
+    body {
+        background-color: black;
+        color: white;
+        margin: 0;
+        padding: 0;
+        font-family: 'Fixedsys', monospace;
+        font-size: 9pt;
+    }
+    #mainContainer {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two columns */
+        grid-template-rows: auto auto auto; /* Three rows */
+        grid-gap: 15px; /* Gap between rows and columns */
+	padding-top: 25px;
+    }
+    .left-container {
+	justify-content: center;
+	align-content: center;
+	margin: 0 auto 0 auto;
+}
+    .container, #coloredDisplay {
+	max-width: calc(88ch + 20px);
+        background-color: black;
+        color: white;
+	padding: 0px 0px 10px 0px;
+    }
+    .editable {
+	min-width: calc(82ch + 20px);
+        max-width: 100%;
+        min-height: calc(10em + 20px);
+        max-height: calc(30em + 20px);
+        overflow: auto;
+        border: 1px solid #ccc;
+	margin: auto;
+        padding: 10px;
+        box-sizing: border-box;
+        resize: vertical;
+    }
+    .controls-container {
+        display: flex;
+        justify-content: center;
+	margin-left: auto;
+	margin-right: auto;
+        align-items: center;
+	max-width: calc(88ch + 20px);
+	
+    }
+    select, button {
+        background-color: black;
+        color: white;
+        border: 1px solid #ccc;
+	margin: 10px;
+        padding: 6px;
+        font-family: 'Fixedsys', monospace;
+        font-size: 11pt;
+        cursor: pointer;
+    }
+    #coloredDisplay {
+        white-space: pre-line;
+        padding: 10px;
+        overflow: hidden;
+	margin: auto;
+	justify-content: center;
+	align-items: center;
+    }
+    @media (max-width: 1200px) {
+        #mainContainer {
+            grid-template-columns: 1fr; /* One column */
+	    justify-content: center;
+            align-items: center;
+        }
+	#coloredDisplay {
+	    justify-content: center;
+	    align-items: center;
+	.controls-container {
+	    justify-content: space-around;
+            align-items: left;
+    }
+</style>
 </head>
 <body>
-<select id="colorOption" onchange="applyGradient()">
-    <option value="20">20 Color Codes</option>
-    <option value="10">10 Color Codes</option>
-    <option value="5">5 Color Codes</option>
-</select>
-<textarea id="input" rows="10" cols="30" onfocus="clearDefaultText()" onblur="setDefaultText()" oninput="applyGradient()">Paste your description here...</textarea>
-<textarea id="output" rows="10" cols="30" readonly></textarea>
-
+<div id="mainContainer">
+<div class="left-container">
+    <div class="container">
+        <textarea id="input" class="editable" onfocus="clearDefaultText()" onblur="setDefaultText()" oninput="applyGradient()">Paste your description here...</textarea>
+    </div>
+    <div class="container">
+        <textarea id="output" class="editable" readonly></textarea>
+    </div>
+    <div class="container">
+        <div class="controls-container">
+            <select id="colorOption" onchange="applyGradient()">
+                <option value="20">20 Color Codes</option>
+                <option value="10">10 Color Codes</option>
+                <option value="5">5 Color Codes</option>
+            </select>
+            <select id="fontSizeOption" onchange="adjustFontSize()">
+                <option value="9">9pt</option>
+                <option value="11">11pt</option>
+                <option value="14">14pt</option>
+            </select>
+            <button onclick="copyToClipboard()">Copy Output to Clipboard</button>
+        </div>
+    </div>
+</div>
+    <div id="coloredDisplay"></div>
+</div>
 <script>
-let isDefaultText = true; // Variable to track whether the default text is present
+let isDefaultText = true; 
+
+const colorToHexMap = {
+    "&007": "#c0c0c0",
+    "&008": "#808080",
+    "&015": "#ffffff",
+    "&102": "#878787",
+    "&145": "#afafaf",
+    "&188": "#d7d7d7",
+    "&231": "#ffffff",
+    "&243": "#767676",
+    "&244": "#808080",
+    "&245": "#8a8a8a",
+    "&246": "#949494",
+    "&247": "#9e9e9e",
+    "&248": "#a8a8a8",
+    "&249": "#b2b2b2",
+    "&250": "#bcbcbc",
+    "&251": "#c6c6c6",
+    "&252": "#d0d0d0",
+    "&253": "#dadada",
+    "&254": "#e4e4e4",
+    "&255": "#eeeeee"
+};
 
 function clearDefaultText() {
     if (isDefaultText) {
@@ -31,8 +152,19 @@ function setDefaultText() {
     }
 }
 
+function adjustFontSize() {
+    const selectedSize = document.getElementById('fontSizeOption').value;
+    document.getElementById('coloredDisplay').style.fontSize = `${selectedSize}pt`;
+}
+
+function copyToClipboard() {
+    const outputElem = document.getElementById('output');
+    outputElem.select();
+    document.execCommand('copy');
+}
+
 function applyGradient() {
-    if (isDefaultText) return; // Do not apply gradient if the default text is present
+    if (isDefaultText) return;
     
     const colorOptions = {
         "20": ["&231", "&015", "&255", "&254", "&253", "&188", "&252", "&251", "&007", "&250", 
@@ -53,9 +185,11 @@ function applyGradient() {
     const interval = Math.floor(totalLength / colorCodes.length);
     
     let outputText = '';
+    let displayHtml = '';
     
     for(const line of lines) {
         let resultingLine = colorCodes[0];
+        let displayLine = `<span style="color: ${colorToHexMap[colorCodes[0]]}">`;
         let insertIdx = interval;
         
         for(let i = 1; i < colorCodes.length; i++) {
@@ -64,15 +198,21 @@ function applyGradient() {
             
             const substring = line.substring(startIdx, insertIdx);
             resultingLine += substring + colorCodes[i];
+            displayLine += substring + `</span><span style="color: ${colorToHexMap[colorCodes[i]]}">`;
             
             insertIdx += interval;
         }
         
-        resultingLine += line.substring(insertIdx - interval);
+        const remainder = line.substring(insertIdx - interval);
+        resultingLine += remainder;
+        displayLine += remainder + '</span>';
+        
         outputText += resultingLine + '\n';
+        displayHtml += displayLine + '<br>';
     }
     
     document.getElementById('output').value = outputText.trim();
+    document.getElementById('coloredDisplay').innerHTML = displayHtml;
 }
 </script>
 </body>
